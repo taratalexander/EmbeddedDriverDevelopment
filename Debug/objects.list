@@ -1,0 +1,5 @@
+"./Src/002led_button.o"
+"./Src/syscalls.o"
+"./Src/sysmem.o"
+"./Startup/startup_stm32f103rbtx.o"
+"./drivers/Src/stm32f103xx_gpio_driver.o"
