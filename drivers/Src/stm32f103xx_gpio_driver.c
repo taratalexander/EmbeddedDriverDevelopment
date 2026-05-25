@@ -311,7 +311,7 @@ void GPIO_ToggleOutputPin(GPIO_RegDef_t *pGPIOx, uint8_t PinNumber) {
 	pGPIOx->ODR ^= (1 << PinNumber);
 }
 /*********************************************************************
- * @fn      		  - SPI_IRQPriorityConfig
+ * @fn      		  - GPIO_IRQInterruptConfig
  *
  * @brief             - Configuring the interrupt from processor side (Cortex M3 Generic User Guide )
  *
@@ -323,7 +323,7 @@ void GPIO_ToggleOutputPin(GPIO_RegDef_t *pGPIOx, uint8_t PinNumber) {
  * @Note              - This function enables/disables the interrupt in NVIC and configures its priority.
 
  */
-void GPIO_IRQConfig(uint8_t IRQNumber,uint8_t EnorDi) {
+void GPIO_IRQInterruptConfig(uint8_t IRQNumber,uint8_t EnorDi) {
 	if (EnorDi == ENABLE) {
 		if (IRQNumber <= 31) {
 
@@ -351,7 +351,7 @@ void GPIO_IRQConfig(uint8_t IRQNumber,uint8_t EnorDi) {
 
 }
 /*********************************************************************
- * @fn      		  - GPIO_IRQInterruptConfig
+ * @fn      		  - GPIO_IRQPriorityConfig
  *
  * @brief             - Configures the priority of a given IRQ (Interrupt Request)
  * 						using the NVIC Interrupt Priority Registers (IPR).
@@ -381,27 +381,30 @@ void GPIO_IRQConfig(uint8_t IRQNumber,uint8_t EnorDi) {
  *  					Lower priority value means higher interrupt priority.
 
  */
-void GPIO_IRQInterruptConfig(uint8_t IRQNumber,uint8_t IRQPriority) {
+void GPIO_IRQPriorityConfig(uint8_t IRQNumber,uint8_t IRQPriority) {
 
 	//1.Find out the IPR register
-	uint8_t iprx = (IRQNumber/4)*4;
+	uint8_t iprx = (IRQNumber/4);
 	uint8_t iprx_section = IRQNumber%4;
 	uint8_t shift_amount = (8 * iprx_section) + (8- NO_PR_BITS_IMPLEMENTED);
-	*(NVIC_PR_BASEADDR + iprx) |=(IRQPriority << shift_amount);
+	*(NVIC_PR_BASEADDR + iprx) &= ~(0xF << shift_amount);
+	*(NVIC_PR_BASEADDR + (iprx)) |=(IRQPriority << shift_amount);
 
 }
 /*********************************************************************
  * @fn      		  - GPIO_IRQHandling
  *
- * @brief             -
+ * @brief             -  Checks whether the interrupt is generated from the given EXTI line.
  *
- * @param[in]         -
- * @param[in]         -
- * @param[in]         -
+ * @param[in]         -  PinNumber : EXTI line number / GPIO pin number
  *
- * @return            -
+ * @return            - void
  *
- * @Note              -
+ * @Note              - If the pending bit is set in the EXTI Pending Register (PR),
+ * 						the function clears the pending bit by writing 1 to it.
+ *
+ * 						STM32 EXTI pending bits are cleared by writing 1
+ * 						to the corresponding bit position.
 
  */
 void GPIO_IRQHandling(uint8_t PinNumber) {
@@ -410,6 +413,24 @@ void GPIO_IRQHandling(uint8_t PinNumber) {
 	if( EXTI->PR & (1<< PinNumber) ){
 		//clear
 		EXTI->PR = (1<<PinNumber);
+	}
+}
+/*********************************************************************
+ * @fn      		  - GPIO_AFIO_PeriClockCntrl
+ *
+ * @brief             - This function enables or disables peripheral clock for the given AFIO
+ * @param[in]         - ENABLE or DISABLE macros
+ *
+ * @return            -  none
+ *
+ * @Note              -  none
+
+ */
+void GPIO_AFIO_ClockCntrl(uint8_t EnorDi) {
+	if (EnorDi == ENABLE) {
+		AFIO_PCLK_EN();
+	} else {
+		AFIO_PCLK_DI();
 	}
 }
 
