@@ -71,6 +71,10 @@ void GPIO_PeriClockControl(GPIO_RegDef_t *pGPIOx, uint8_t EnorDi) {
  */
 void GPIO_Init(GPIO_Handle_t *pGPIOHandle) {
 
+	//Enable the peripheral clock
+
+	GPIO_PeriClockControl(pGPIOHandle->pGPIOx, ENABLE);
+
 	//1. Configure the mode & cnf of gpio pin &
 	//2. Configure the speed using Mode
 	//3. Configure the pupd settings
