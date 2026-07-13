@@ -19,7 +19,7 @@ int main(void) {
 	GpioLed.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT_50;
 	GpioLed.GPIO_PinConfig.GPIO_PinCnf = GPIO_CNF_OUT_OD;
 
-	GPIO_PeriClockControl(GPIOA, ENABLE);
+
 	GPIO_Init(&GpioLed);
 
 	while (1) {

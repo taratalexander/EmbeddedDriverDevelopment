@@ -23,7 +23,7 @@ int main(void) {
 	GpioLed.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT_50;
 	GpioLed.GPIO_PinConfig.GPIO_PinCnf = GPIO_CNF_OUT_PP;
 
-	GPIO_PeriClockControl(GPIOA, ENABLE);
+
 	GPIO_Init(&GpioLed);
 
 	GPIOBtn.pGPIOx = GPIOC;
@@ -32,7 +32,7 @@ int main(void) {
 	GPIOBtn.GPIO_PinConfig.GPIO_PinCnf = GPIO_CNF_IN_PUPD;
 	GPIOBtn.GPIO_PinConfig.GPIO_PinPuPdControl= GPIO_PULLUP;
 
-	GPIO_PeriClockControl(GPIOC, ENABLE);
+
 	GPIO_Init(&GPIOBtn);
 
 	while (1) {

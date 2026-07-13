@@ -88,16 +88,14 @@ void SPI_Init(SPI_Handle_t *pSPIHandle) {
 
 	//2.Configure the bus config(Bidi type)
 
-	if(pSPIHandle->SPIConfig.SPI_BusConfig == SPI_BUS_CONFIG_FD)
-	{
+	if (pSPIHandle->SPIConfig.SPI_BusConfig == SPI_BUS_CONFIG_FD) {
 		//BIDIMODE should be cleared
 		tempreg &= ~(1 << SPI_CR1_BIDIMOOE);
-	} else if(pSPIHandle->SPIConfig.SPI_BusConfig == SPI_BUS_CONFIG_HD)
-	{
+	} else if (pSPIHandle->SPIConfig.SPI_BusConfig == SPI_BUS_CONFIG_HD) {
 		//BIDIMODE should be set
 		tempreg |= (1 << SPI_CR1_BIDIMOOE);
-	} else if(pSPIHandle->SPIConfig.SPI_BusConfig == SPI_BUS_CONFIG_SIMPLEX_RXONLY)
-	{
+	} else if (pSPIHandle->SPIConfig.SPI_BusConfig
+			== SPI_BUS_CONFIG_SIMPLEX_RXONLY) {
 		//BIDIMODE should be cleared
 		tempreg &= ~(1 << SPI_CR1_BIDIMOOE);
 		//RXONLY should be set
@@ -154,15 +152,13 @@ void SPI_DeInit(SPI_RegDef_t *pSPIx) {
 		SPI1_REG_RESET();
 	} else if (pSPIx == SPI2) {
 		SPI2_REG_RESET();
-	}else if (pSPIx == SPI3) {
+	} else if (pSPIx == SPI3) {
 		SPI3_REG_RESET();
 	}
 }
 
-
-uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx,uint32_t flag)
-{
-	return (pSPIx->SR & flag)?SPI_FLAG_SET:SPI_FLAG_RESET;
+uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx, uint32_t flag) {
+	return (pSPIx->SR & flag) ? SPI_FLAG_SET : SPI_FLAG_RESET;
 }
 /*********************************************************************
  * @fn      		  - SPI_SendData
@@ -182,33 +178,29 @@ uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx,uint32_t flag)
 
  */
 
-void SPI_SendData(SPI_RegDef_t *pSPIx,uint8_t *pTxBuffer,uint32_t len) {
+void SPI_SendData(SPI_RegDef_t *pSPIx, uint8_t *pTxBuffer, uint32_t len) {
 
-		while(len > 0)
-		{
-			//1. Wait until TXE flag is set
-			while(SPI_GetFlagStatus(pSPIx,SPI_TXE_FLAG)== SPI_FLAG_RESET);
+	while (len > 0) {
+		//1. Wait until TXE flag is set
+		while (SPI_GetFlagStatus(pSPIx, SPI_TXE_FLAG) == SPI_FLAG_RESET)
+			;
 
-			//2.Check the DFF bit in CR1
-			if(pSPIx->CR1 & 1 << SPI_CR1_DFF)
-			{
-				//16 bit data
-				//1.Load data to the DR reg.
-				pSPIx->DR = *((uint16_t*)pTxBuffer);
-				len--;
-				len--;
-				(uint16_t*)pTxBuffer++;
-			}
-			else
-			{
-				//8 bit data
-				pSPIx->DR = *(pTxBuffer);
-				len--;
-				pTxBuffer++;
-			}
-
-
+		//2.Check the DFF bit in CR1
+		if (pSPIx->CR1 & 1 << SPI_CR1_DFF) {
+			//16 bit data
+			//1.Load data to the DR reg.
+			pSPIx->DR = *((uint16_t*) pTxBuffer);
+			len--;
+			len--;
+			(uint16_t*) pTxBuffer++;
+		} else {
+			//8 bit data
+			pSPIx->DR = *(pTxBuffer);
+			len--;
+			pTxBuffer++;
 		}
+
+	}
 }
 
 /*********************************************************************
@@ -216,18 +208,40 @@ void SPI_SendData(SPI_RegDef_t *pSPIx,uint8_t *pTxBuffer,uint32_t len) {
  *
  * @brief             - Reads the value from the specific SPI
  *
- * @param[in]         - Base Address of the SPI Peripheral
- * @param[in]         - Buffer data
- * @param[in]         - Length of the data
-
+ * @param[in]         - pSPIx: Base Address of the SPI Peripheral
+ * @param[in]         - pRxBuffer: Pointer to the receive data buffer.
+ * @param[in]         - len: Number of bytes to transmit
  *
- * @return            - void
+ * @return            - None
  *
- * @Note              -
+ * @Note              - This is a blocking (polling) API. The function waits for
+ *          			the RXNE (Receive Buffer Empty) flag before loading each
+ *          			data frame into the SPI Data Register (DR). Supports both
+ *          			8-bit and 16-bit data frame formats.
 
  */
-void SPI_ReceiveData(SPI_RegDef_t *pSPIx,uint8_t *pRxBuffer,uint32_t len) {
+void SPI_ReceiveData(SPI_RegDef_t *pSPIx, uint8_t *pRxBuffer, uint32_t len) {
 
+	while (len > 0) {
+		//1. Wait until RXNE flag is set
+		while (SPI_GetFlagStatus(pSPIx, SPI_RXNE_FLAG) == SPI_FLAG_RESET);
+
+		//2.Check the DFF bit in CR1
+		if (pSPIx->CR1 & 1 << SPI_CR1_DFF) {
+			//16 bit data
+			//1.Load data from the DR reg to RxBuffer.
+			*((uint16_t*) pRxBuffer) = pSPIx->DR;
+			len--;
+			len--;
+			(uint16_t*) pRxBuffer++;
+		} else {
+			//8 bit data
+			*(pRxBuffer) = pSPIx->DR;
+			len--;
+			pRxBuffer++;
+		}
+
+	}
 }
 
 /*********************************************************************
@@ -243,7 +257,31 @@ void SPI_ReceiveData(SPI_RegDef_t *pSPIx,uint8_t *pRxBuffer,uint32_t len) {
  * @Note              - This function enables/disables the interrupt in NVIC and configures its priority.
 
  */
-void SPI_IRQInterruptConfig(uint8_t IRQNumber,uint8_t EnorDi) {
+void SPI_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnorDi) {
+	if (EnorDi == ENABLE) {
+			if (IRQNumber <= 31) {
+
+				*NVIC_ISER0 |= (1 << IRQNumber);
+				// program ISER0
+			} else if (IRQNumber >= 32 && IRQNumber < 63) {
+				// program ISER1
+				*NVIC_ISER1 |= (1 << (IRQNumber % 32));
+			} else if (IRQNumber >= 64 && IRQNumber < 96) {
+				// program ISER2
+				*NVIC_ISER2 |= (1 << (IRQNumber % 64));
+			}
+		} else {
+			if (IRQNumber <= 31) {
+				// program ICER0
+				*NVIC_ICER0 |= (1 << IRQNumber);
+			} else if (IRQNumber >= 32 && IRQNumber < 63) {
+				// program ICER1
+				*NVIC_ICER1 |= (1 << (IRQNumber % 32));
+			} else if (IRQNumber >= 64 && IRQNumber < 96) {
+				// program ICER2
+				*NVIC_ICER2 |= (1 << (IRQNumber % 64));
+			}
+		}
 
 }
 /*********************************************************************
@@ -277,14 +315,14 @@ void SPI_IRQInterruptConfig(uint8_t IRQNumber,uint8_t EnorDi) {
  *  					Lower priority value means higher interrupt priority.
 
  */
-void SPI_IRQPriorityConfig(uint8_t IRQNumber,uint8_t IRQPriority) {
+void SPI_IRQPriorityConfig(uint8_t IRQNumber, uint8_t IRQPriority) {
 
 	//1.Find out the IPR register
-	uint8_t iprx = (IRQNumber/4);
-	uint8_t iprx_section = IRQNumber%4;
-	uint8_t shift_amount = (8 * iprx_section) + (8- NO_PR_BITS_IMPLEMENTED);
+	uint8_t iprx = (IRQNumber / 4);
+	uint8_t iprx_section = IRQNumber % 4;
+	uint8_t shift_amount = (8 * iprx_section) + (8 - NO_PR_BITS_IMPLEMENTED);
 	*(NVIC_PR_BASEADDR + iprx) &= ~(0xF << shift_amount);
-	*(NVIC_PR_BASEADDR + (iprx)) |=(IRQPriority << shift_amount);
+	*(NVIC_PR_BASEADDR + (iprx)) |= (IRQPriority << shift_amount);
 
 }
 /*********************************************************************
@@ -303,7 +341,7 @@ void SPI_IRQPriorityConfig(uint8_t IRQNumber,uint8_t IRQPriority) {
  * 						to the corresponding bit position.
 
  */
-void SPI_IRQHandling(SPI_Handle_t *pSPIHandle){
+void SPI_IRQHandling(SPI_Handle_t *pSPIHandle) {
 
 }
 
@@ -328,12 +366,10 @@ void SPI_IRQHandling(SPI_Handle_t *pSPIHandle){
  *                      before changing SPI configuration settings.
  *
  *********************************************************************/
-void SPI_PeripheralControl(SPI_RegDef_t *pSPIx,uint8_t EnorDi)
-{
-	if(EnorDi == ENABLE){
+void SPI_PeripheralControl(SPI_RegDef_t *pSPIx, uint8_t EnorDi) {
+	if (EnorDi == ENABLE) {
 		pSPIx->CR1 |= (1 << SPI_CR1_SPE);
-	}
-	else {
+	} else {
 		pSPIx->CR1 &= ~(1 << SPI_CR1_SPE);
 	}
 }
@@ -358,12 +394,41 @@ void SPI_PeripheralControl(SPI_RegDef_t *pSPIx,uint8_t EnorDi)
  *                      mode when NSS is managed by software.
  *
  *********************************************************************/
-void SPI_SSIConfig(SPI_RegDef_t *pSPIx,uint8_t EnorDi)
-{
-	if(EnorDi == ENABLE){
+void SPI_SSIConfig(SPI_RegDef_t *pSPIx, uint8_t EnorDi) {
+	if (EnorDi == ENABLE) {
 		pSPIx->CR1 |= (1 << SPI_CR1_SSI);
-	}
-	else {
+	} else {
 		pSPIx->CR1 &= ~(1 << SPI_CR1_SSI);
+	}
+}
+
+/*********************************************************************
+ * @fn                - SPI_SSIConfig
+ *
+ * @brief             - Configures the SSOE (Slave Select Output Enable) bit
+ *                      in the SPI CR2 register.
+ *
+ * @param[in]         - pSPIx : Base address of the SPI peripheral
+ *
+ * @param[in]         - EnorDi : ENABLE or DISABLE
+ *                               ENABLE  -> Sets the SSOE bit
+ *                               DISABLE -> Clears the SSOE bit
+ *
+ * @return            - None
+ *
+ * @Note              - The SSOE bit is used when the device operates in master mode and also
+ * 						hardware slave select management is used (SSM =0)
+ *                      NSS output enabled (SSM = 0, SSOE = 1):
+ *                      The NSS signal is driven low when the master starts the communication
+ *                      and is kept low until the SPI is disabled
+ *                      NSS output disabled (SSM = 0, SSOE = 0):
+ *                      This configuration allows multi-master capability for devices operating in master mode
+ *
+ *********************************************************************/
+void SPI_SSOEConfig(SPI_RegDef_t *pSPIx, uint8_t EnorDi) {
+	if (EnorDi == ENABLE) {
+		pSPIx->CR2 |= (1 << SPI_CR2_SSOE);
+	} else {
+		pSPIx->CR2 &= ~(1 << SPI_CR2_SSOE);
 	}
 }
