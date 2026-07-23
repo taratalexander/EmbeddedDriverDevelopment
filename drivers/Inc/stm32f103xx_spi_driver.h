@@ -24,13 +24,20 @@ typedef struct
 	uint8_t SPI_SSM;
 
 }SPI_Config_T;
+
 /**
  * Handle structure for SPIx peripheral
  */
 typedef struct
 {
-	SPI_RegDef_t *pSPIx;  //Holds the base address of SPIx peripherals
+	SPI_RegDef_t *pSPIx;  	/* !< Holds the base address of SPIx peripherals > */
 	SPI_Config_T SPIConfig;
+	uint8_t *pTxBuffer;		/* !< To store the app. Tx buffer address >*/
+	uint8_t *pRxBuffer;		/* !< To store the app. Rx buffer address >*/
+	uint32_t TxLen;			/* !< To store the Tx len >*/
+	uint32_t RxLen;			/* !< To store the Rx len >*/
+	uint8_t TxState;		/* !< To store the Tx State >*/
+	uint8_t RxState;		/* !< To store the Rx State >*/
 
 }SPI_Handle_t;
 
@@ -97,6 +104,20 @@ typedef struct
 #define SPI_OVR_FLAG				(1 << SPI_SR_OVR)
 #define SPI_BUSY_FLAG				(1 << SPI_SR_BSY)
 
+/**
+ * SPI Application States
+ */
+#define SPI_READY						0
+#define SPI_BUSY_IN_RX					1
+#define SPI_BUSY_IN_TX					2
+
+/**
+ * Possible SPI Application Events
+ */
+#define SPI_EVENT_TX_CMPLT				1
+#define SPI_EVENT_RX_CMPLT				2
+#define SPI_EVENT_OVR_ERR				3
+
 
 /***************************************************************************************
  * 								APIs supported by this driver
@@ -121,6 +142,10 @@ void SPI_SendData(SPI_RegDef_t *pSPIx,uint8_t *pTxBuffer,uint32_t len);
 
 void SPI_ReceiveData(SPI_RegDef_t *pSPIx,uint8_t *pRxBuffer,uint32_t len);
 
+uint8_t SPI_SendDataIT(SPI_Handle_t *pSPIHandle,uint8_t *pTxBuffer,uint32_t len);
+
+uint8_t SPI_ReceiveDataIT(SPI_Handle_t *pSPIHandle,uint8_t *pRxBuffer,uint32_t len);
+
 /*
  * IRQ Configuration and ISR handling
  */
@@ -135,5 +160,11 @@ void SPI_PeripheralControl(SPI_RegDef_t *pSPIx,uint8_t EnorDi);
 void SPI_SSIConfig(SPI_RegDef_t *pSPIx,uint8_t EnorDi);
 void SPI_SSOEConfig(SPI_RegDef_t *pSPIx,uint8_t EnorDi);
 uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx,uint32_t flag);
-
+void SPI_ClearOVRFlag(SPI_RegDef_t *pSPIx);
+void SPI_CloseTransmission(SPI_Handle_t *pSPIHandle);
+void SPI_CloseReception(SPI_Handle_t *pSPIHandle);
+/*
+ * Application Callback
+ */
+void SPI_ApplicationEventCallback(SPI_Handle_t *pSPIHandle,uint8_t AppEv);
 #endif /* INC_STM32F103XX_SPI_DRIVER_H_ */

@@ -7,11 +7,13 @@
 
 #ifndef INC_STM32F103XX_H_
 #define INC_STM32F103XX_H_
+#include<stddef.h>
 #include<stdint.h>
 /*
  * Base addresses of Flash and SRAM Memories
  */
 #define __vo		volatile
+#define __weak		__attribute__((weak))
 
 /*********************PROCESSOR SPECIFIC DETAILS***************************************************************************************/
 /*
