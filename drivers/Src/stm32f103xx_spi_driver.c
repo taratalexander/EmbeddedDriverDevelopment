@@ -445,7 +445,7 @@ void SPI_SSIConfig(SPI_RegDef_t *pSPIx, uint8_t EnorDi) {
 }
 
 /*********************************************************************
- * @fn                - SPI_SSIConfig
+ * @fn                - SPI_SSOEConfig
  *
  * @brief             - Configures the SSOE (Slave Select Output Enable) bit
  *                      in the SPI CR2 register.
