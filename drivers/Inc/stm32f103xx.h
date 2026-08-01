@@ -358,6 +358,8 @@ typedef struct
 #define GPIO_PIN_RESET 		RESET
 #define SPI_FLAG_SET 		SET
 #define SPI_FLAG_RESET 		RESET
+#define I2C_FLAG_SET 		SET
+#define I2C_FLAG_RESET 		RESET
 
 
 /*********************************************************************************
