@@ -45,6 +45,12 @@ typedef struct
 #define I2C_ACK_ENABLE			1
 #define I2C_ACK_DISABLE			0
 
+/**
+ * @I2C_RepeatedStart
+ */
+#define I2C_ENABLE_SR			SET
+#define I2C_DISABLE_SR			RESET
+
 
 /**
  * @I2C_FMDutycycle
@@ -87,8 +93,8 @@ void I2C_DeInit(I2C_RegDef_t *pI2Cx);
  * Data Send and Receive
  */
 
-void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,uint8_t *pTxBuffer,uint32_t len,uint8_t slaveAddr);
-
+void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,uint8_t *pTxBuffer,uint32_t len,uint8_t slaveAddr,uint8_t Sr);
+void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, uint8_t len, uint8_t slaveAddr,uint8_t Sr);
 /*
  * IRQ Configuration and ISR handling
  */
